@@ -54,14 +54,432 @@
   .brand h1{
     margin:0; font-size: clamp(18px,2.4vw,24px); font-weight:700; letter-spacing:.2px;
   }
-  .pill{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:10px 14px; border-radius:999px;
+  .controls{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     background:var(--card);
     border:1px solid var(--border);
-    backdrop-filter: blur(12px);
+    padding:10px 12px; border-radius:16px; backdrop-filter:blur(10px);
   }
   .btn{
+    cursor:pointer;
+    border:none;
+    padding:12px 18px;
+    font-weight:700;
+    border-radius:14px;
+    color:white;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2));
+    box-shadow:0 8px 22px rgba(15,76,129,.25);
+    transition:transform .06s ease;
+  }
+  .btn:active{ transform:scale(.98); }
+  .hint{font-size:12px; opacity:.9}
+
+  /* LAYOUT: 2 colunas (info à esquerda, gráfico à direita) */
+  main{
+    display:grid;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+    gap:16px;
+  }
+  @media (max-width:900px){
+    main{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:22px;
+    backdrop-filter: blur(14px);
+    padding:18px;
+    box-shadow:0 14px 40px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+
+  /* Painel de informações (esquerda) */
+  .info h2{margin:0 0 10px 0; font-size: clamp(18px,2.2vw,22px)}
+  .metrics{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .kpi{
+    padding:12px;
+    border-radius:16px;
+    background:var(--card-strong);
+    border:1px solid var(--border);
+  }
+  .kpi .label{opacity:.9; font-size:12px}
+  .kpi .value{ font-size: clamp(18px,2.6vw,26px); font-weight:800}
+  .loads{
+    margin-top:10px; font-size:14px; line-height:1.35;
+    padding:12px; border-radius:14px;
+    background:rgba(255,255,255,.14);
+    border:1px dashed var(--border);
+  }
+
+  /* Gráfico (direita) */
+  .chartArea{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .barwrap{
+    position:relative;
+    width:min(320px,70vw);          /* barra bem larga */
+    height:min(520px,75vh);         /* barra alta */
+    border-radius:28px;
+    background:linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.10));
+    border:1px solid var(--border);
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.45);
+    overflow:hidden;
+  }
+  .ticks{ position:absolute; inset:10px; pointer-events:none; }
+  .tick{ position:absolute; left:8px; right:8px; border-top:1px dashed rgba(255,255,255,.55); }
+  .tick .tlabel{
+    position:absolute; right:-4px; transform:translateY(-50%);
+    background:rgba(255,255,255,.7); color:#093; font-weight:800;
+    font-size:12px; padding:2px 6px; border-radius:10px; border:1px solid rgba(0,0,0,.06);
+  }
+  .bar{
+    position:absolute; bottom:0; left:0; right:0;
+    height:0%;
+    background: linear-gradient(180deg, var(--good), var(--blue));
+    box-shadow: inset 0 10px 24px rgba(255,255,255,.25), 0 -6px 18px rgba(0,0,0,.12);
+    transition: height .6s cubic-bezier(.22,1,.36,1);
+  }
+  .percentTag{
+    position:absolute;
+    top:10px; left:50%; transform:translateX(-50%);
+    background:rgba(255,255,255,.8); padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(0,0,0,.06);
+    font-weight:900; letter-spacing:.2px;
+  }
+
+  footer{
+    opacity:.9; font-size:12px; text-align:center; margin-top:6px;
+  }
+
+  /* Modal de configuração */
+  .modal{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.35);
+  }
+  .modal .sheet{
+    width:min(520px,90vw);
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:18px;
+    backdrop-filter:blur(14px);
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal .sheet h3{margin:0 0 6px 0}
+  .modal .sheet p{margin:8px 0}
+  .row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px}
+  .chip{
+    padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:rgba(255,255,255,.6);
+    font-weight:700; font-size:13px;
+  }
+  .small{font-size:12px; opacity:.85}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3l3 5h-6l3-5zm-6.5 9a6.5 6.5 0 1013 0h-2a4.5 4.5 0 11-9 0h-2z" fill="#0ea5a8"/>
+          <circle cx="12" cy="17.5" r="3.5" fill="#1e88e5"/>
+        </svg>
+        <h1>Placa Solar (1 W) x Placa 1000 W • Controle USB</h1>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">Iniciar leitura</button>
+        <button class="btn" id="cfgBtn" title="Ajuste caso os botões não sejam reconhecidos">Configurar botões</button>
+        <span id="gpStatus" class="hint">Conecte o controle por USB, clique em “Iniciar leitura” e pressione qualquer botão.</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ESQUERDA: Informações em tempo real -->
+      <section class="card info" aria-live="polite">
+        <h2>Informações (tempo real)</h2>
+        <div class="metrics">
+          <div class="kpi">
+            <div class="label">Nível do gráfico</div>
+            <div class="value"><span id="kpiPerc">0</span>%</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Mini placa (1 W máx)</div>
+            <div class="value"><span id="kpiMini">0,00</span> W</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Placa residencial (1000 W)</div>
+            <div class="value"><span id="kpiHouse">0</span> W</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Situação</div>
+            <div class="value" id="kpiLabel">Sem energia</div>
+          </div>
+        </div>
+        <div class="loads">
+          <strong>O que daria para ligar em casa:</strong>
+          <div id="loadsText">Nada — sem energia disponível.</div>
+          <div class="small" style="margin-top:6px">
+            <em>Observação:</em> estimativas aproximadas; não considera picos de partida (ex.: geladeira).
+          </div>
+        </div>
+      </section>
+
+      <!-- DIREITA: Gráfico -->
+      <section class="card chartArea">
+        <div class="barwrap" role="img" aria-label="Barra vertical de produção de energia">
+          <div class="percentTag"><span id="percentTop">0</span>%</div>
+          <div class="ticks">
+            <!-- 35% -->
+            <div class="tick" style="top: calc(100% - 35% - 10px);">
+              <span class="tlabel" style="top:0">35%</span>
+            </div>
+            <!-- 70% -->
+            <div class="tick" style="top: calc(100% - 70% - 10px);">
+              <span class="tlabel" style="top:0">70%</span>
+            </div>
+            <!-- 100% -->
+            <div class="tick" style="top: calc(0% + 0px);">
+              <span class="tlabel" style="top:0">100%</span>
+            </div>
+          </div>
+          <div id="bar" class="bar"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Gamepad API (Android/Windows). Layout responsivo com margens superior e inferior. Use “Configurar botões” se seu controle tiver mapeamento diferente.
+    </footer>
+  </div>
+
+  <!-- Modal de configuração -->
+  <div id="cfgModal" class="modal" aria-hidden="true">
+    <div class="sheet">
+      <h3>Configuração rápida dos botões</h3>
+      <p>Alguns controles têm mapeamentos diferentes. Vamos ensinar à página quais botões serão usados.</p>
+      <ol class="small">
+        <li>Clique em <strong>Começar</strong> abaixo;</li>
+        <li>Quando solicitado, <strong>pressione e solte</strong> o botão desejado para cada função (B11, B10, B9);</li>
+        <li>Ao terminar, feche esta janela.</li>
+      </ol>
+      <div class="row">
+        <button class="btn" id="cfgStart">Começar</button>
+        <button class="btn" id="cfgClose" style="background:linear-gradient(90deg,#6b7280,#374151)">Fechar</button>
+        <span id="cfgStep" class="chip">Pronto para iniciar</span>
+      </div>
+      <div class="small" style="margin-top:10px">
+        Dica: se algum botão não registrar, tente novamente. Também aceitamos eixos analógicos (por exemplo, gatilhos); mova-os com força para registrar.
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ======== UI refs ========
+  const bar = document.getElementById('bar');
+  const percentTop = document.getElementById('percentTop');
+  const kpiPerc = document.getElementById('kpiPerc');
+  const kpiMini = document.getElementById('kpiMini');
+  const kpiHouse = document.getElementById('kpiHouse');
+  const loadsText = document.getElementById('loadsText');
+  const kpiLabel = document.getElementById('kpiLabel');
+  const startBtn = document.getElementById('startBtn');
+  const cfgBtn = document.getElementById('cfgBtn');
+  const gpStatus = document.getElementById('gpStatus');
+
+  // Modal
+  const cfgModal = document.getElementById('cfgModal');
+  const cfgStart = document.getElementById('cfgStart');
+  const cfgClose = document.getElementById('cfgClose');
+  const cfgStep = document.getElementById('cfgStep');
+
+  // ======== State ========
+  let rafId = null;
+  let running = false;
+
+  // Mapping: aceita botões OU eixos (com sinal)
+  const map = {
+    b9:  { kind:'button', index:9,  sign: 1, thresh:0.5 },
+    b10: { kind:'button', index:10, sign: 1, thresh:0.5 },
+    b11: { kind:'button', index:11, sign: 1, thresh:0.5 },
+  };
+
+  // Config flow
+  let captureTarget = null; // 'b11','b10','b9' na ordem
+  let captureOrder = ['b11','b10','b9'];
+  let captureIdx = 0;
+
+  function fmt(n, d=2){
+    return n.toLocaleString('pt-BR', {minimumFractionDigits:d, maximumFractionDigits:d});
+  }
+
+  function describeLoads(pHouseW){
+    if (pHouseW < 1) return 'Nada — sem energia disponível.';
+    if (pHouseW < 400) return '1 TV LED (~100 W), roteador Wi-Fi (~10 W) e 3–5 lâmpadas LED (30–50 W) + ventilador pequeno (~50 W).';
+    if (pHouseW < 850) return 'Geladeira (em funcionamento ~150 W, sem considerar pico) + TV LED + roteador + 5–8 lâmpadas + ventilador.';
+    return 'Geladeira + TV + roteador + lâmpadas + notebook/PC leve. (Atenção aos picos de partida da geladeira.)';
+  }
+
+  function labelFor(perc){
+    switch(perc){
+      case 0: return 'Sem energia';
+      case 35: return 'Baixa produção';
+      case 70: return 'Média produção';
+      case 100: return 'Produção máxima';
+      default: return 'Produção';
+    }
+  }
+
+  function updateUI(perc){
+    bar.style.height = perc + '%';
+    percentTop.textContent = perc;
+    kpiPerc.textContent = perc;
+
+    const pMiniW  = (perc/100) * 1;     // até 1 W
+    const pHouseW = (perc/100) * 1000;  // até 1000 W
+
+    kpiMini.textContent = fmt(pMiniW, 2);
+    kpiHouse.textContent = pHouseW.toLocaleString('pt-BR', {maximumFractionDigits:0});
+    loadsText.textContent = describeLoads(pHouseW);
+    kpiLabel.textContent = labelFor(perc);
+  }
+
+  function setConnected(connected, id=''){
+    gpStatus.textContent = connected
+      ? ('Controle detectado' + (id ? ' • ' + id : ''))
+      : 'Conecte o controle por USB, clique em “Iniciar leitura” e pressione qualquer botão.';
+  }
+
+  function btnPressed(btn){
+    return btn && (btn.pressed || btn.value > 0.6);
+  }
+
+  function isActive(gp, conf){
+    if (conf.kind === 'button'){
+      const b = gp.buttons[conf.index];
+      return btnPressed(b);
+    } else if (conf.kind === 'axis'){
+      const v = gp.axes[conf.index] || 0;
+      return conf.sign > 0 ? v > conf.thresh : v < -conf.thresh;
+    }
+    return false;
+  }
+
+  function captureInput(gp){
+    // Procura botão pressionado
+    for (let i=0; i<(gp.buttons?.length||0); i++){
+      if (btnPressed(gp.buttons[i])){
+        map[captureTarget] = { kind:'button', index:i, sign:1, thresh:0.5 };
+        return {kind:'button', index:i};
+      }
+    }
+    // Procura eixo com desvio forte
+    for (let i=0; i<(gp.axes?.length||0); i++){
+      const v = gp.axes[i];
+      if (v > 0.7){
+        map[captureTarget] = { kind:'axis', index:i, sign:1, thresh:0.5 };
+        return {kind:'axis', index:i, sign:1};
+      }
+      if (v < -0.7){
+        map[captureTarget] = { kind:'axis', index:i, sign:-1, thresh:0.5 };
+        return {kind:'axis', index:i, sign:-1};
+      }
+    }
+    return null;
+  }
+
+  function loop(){
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gp = pads && pads[0];
+
+    if (gp){
+      setConnected(true, gp.id);
+
+      // Fluxo de captura de mapeamento (se ativo)
+      if (captureTarget){
+        const got = captureInput(gp);
+        if (got){
+          cfgStep.textContent = `Registrado ${captureTarget.toUpperCase()}: ${got.kind} #${got.index}`;
+          // Avança
+          captureIdx++;
+          if (captureIdx < captureOrder.length){
+            captureTarget = captureOrder[captureIdx];
+            cfgStep.textContent += ` • Agora pressione ${captureTarget.toUpperCase()}`;
+          } else {
+            // Concluiu
+            captureTarget = null;
+            cfgStep.textContent += ' • Concluído!';
+          }
+        }
+      }
+
+      // Lógica dos níveis com base nos mapeamentos atuais
+      let b9  = isActive(gp, map.b9);
+      let b10 = isActive(gp, map.b10);
+      let b11 = isActive(gp, map.b11);
+
+      let next = 0;
+      if (b11 && b10 && b9)      next = 100;
+      else if (b11 && b10)       next = 70;
+      else if (b11)              next = 35;
+      else                       next = 0;
+
+      updateUI(next);
+    } else {
+      setConnected(false);
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // ======== Controls ========
+  startBtn.addEventListener('click', () => {
+    if (!running){
+      running = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loop);
+    }
+  });
+
+  cfgBtn.addEventListener('click', () => {
+    cfgModal.style.display = 'flex';
+    cfgModal.setAttribute('aria-hidden', 'false');
+  });
+
+  cfgStart.addEventListener('click', () => {
+    captureIdx = 0;
+    captureTarget = captureOrder[captureIdx];
+    cfgStep.textContent = `Pressione ${captureTarget.toUpperCase()}…`;
+  });
+
+  cfgClose.addEventListener('click', () => {
+    cfgModal.style.display = 'none';
+    cfgModal.setAttribute('aria-hidden', 'true');
+  });
+
+  window.addEventListener('gamepadconnected', (e) => setConnected(true, e.gamepad.id));
+  window.addEventListener('gamepaddisconnected', () => setConnected(false));
+
+  // Teclado (fallback rápido para testes): 1=35%, 2=70%, 3=100%, 0=0%
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '1') updateUI(35);
+    else if (e.key === '2') updateUI(70);
+    else if (e.key === '3') updateUI(100);
+    else if (e.key === '0') updateUI(0);
+  });
+
+  // Inicial
+  updateUI(0);
+})();
+</script>
+</body>
+</html>
     cursor:pointer;
     border:none;
     padding:12px 18px;
@@ -669,4 +1087,5 @@
 </script>
 </body>
 </html>
+
 
