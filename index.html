@@ -3,20 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Painel Solar • Gamepad</title>
+<title>Painel Solar • Gamepad (D-Pad)</title>
 <style>
   :root{
-    --bg0:#0b0f14;              /* preto azulado */
-    --bg1:rgba(20,30,40,0.55);  /* vidro escuro */
-    --glow:#0ea5ff;             /* azul destaque */
-    --accent:#9fb3c8;           /* prateado */
-    --green:#34d399;            /* verde detalhe */
-    --blue:#60a5fa;             /* azul detalhe */
+    --bg0:#0b0f14;
+    --bg1:rgba(20,30,40,0.55);
+    --glow:#0ea5ff;
+    --accent:#9fb3c8;
+    --green:#34d399;
+    --blue:#60a5fa;
   }
-
-  html,body{
-    height:100%;
-  }
+  html,body{ height:100%; }
   body{
     margin:0;
     background:
@@ -24,42 +21,391 @@
       radial-gradient(1000px 800px at 85% 100%, #0f1724 0%, transparent 60%),
       linear-gradient(180deg, #0a0f16 0%, #0b0f14 100%);
     color:#e6eef7;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-    overflow:hidden; /* painel fixo, sem rolagem */
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+    overflow:hidden; /* painel fixo */
   }
 
-  /* Container geral ocupa 100vh com margens dentro (topo/rodapé) */
   .wrap{
     box-sizing:border-box;
     height:100vh;
-    padding: min(3vh,24px) min(3vw,24px);
+    padding:min(3vh,24px) min(3vw,24px);
     display:flex;
     flex-direction:column;
     gap:min(2vh,16px);
   }
 
-  /* Cabeçalho compacto */
   header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 14px;
-    border-radius:18px;
-    background: var(--bg1);
-    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; border-radius:20px;
+    background:var(--bg1);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
-  .title{
-    display:flex;gap:12px;align-items:center;
+  .title{ display:flex; gap:12px; align-items:center; }
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--glow); }
+  h1{ margin:0; font-weight:700; letter-spacing:.3px; font-size: clamp(18px,2.6vw,28px); }
+  .status{ font-size: clamp(12px,1.8vw,16px); color:#c9d7e6; opacity:.95; }
+  .btn{
+    appearance:none; border:0; cursor:pointer;
+    padding:10px 16px; border-radius:14px;
+    background:linear-gradient(180deg, rgba(96,165,250,.25), rgba(96,165,250,.12));
+    color:#eaf4ff; font-weight:700;
+    box-shadow:0 6px 16px rgba(14,165,255,.25), inset 0 1px 0 rgba(255,255,255,.06);
+    transition:transform .1s ease;
+    font-size: clamp(12px,1.8vw,16px);
   }
-  .dot{
-    width:10px;height:10px;border-radius:50%;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--glow);
+  .btn:active{ transform:translateY(1px); }
+
+  main{
+    flex:1; display:flex; gap:min(2vh,16px); min-height:0;
   }
-  h1{
-    font-size: clamp(16px, 2.2vw, 22px);
+
+  .card{
+    background:var(--bg1);
+    border-radius:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(148,163,184,.15);
+  }
+
+  /* Esquerda menor; Direita (gráfico) maior */
+  .left{
+    width:30%;
+    min-width:280px;
+    display:flex; flex-direction:column;
+    padding:16px 18px; gap:14px;
+  }
+  .legend{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pill,.badge{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; border-radius:999px;
+    background:rgba(148,163,184,.16);
+    color:#e5edf7; border:1px solid rgba(148,163,184,.18);
+    font-size: clamp(12px,1.7vw,15px);
+  }
+  .pill{ background: rgba(96,165,250,.18); border-color: rgba(96,165,250,.25); }
+
+  .b-dot{ width:10px; height:10px; border-radius:50% }
+  .bd-green{ background:var(--green); box-shadow:0 0 10px rgba(52,211,153,.6) }
+  .bd-blue{ background:var(--blue);  box-shadow:0 0 10px rgba(96,165,250,.6) }
+
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; align-items:center;
+    font-size: clamp(13px,1.9vw,18px);
+  }
+  .label{ color:#c7d2de; }
+  .val{ font-weight:800; color:#eaf2ff; }
+
+  .use-title{ font-weight:800; color:#eaf4ff; font-size: clamp(14px,2vw,20px); }
+  .use-list{
+    margin:6px 0 0 0; padding:0 0 0 16px;
+    line-height:1.4; font-size: clamp(13px,1.9vw,18px); color:#d7e4f2;
+    max-height: 30vh; overflow:auto;
+  }
+  .use-list::-webkit-scrollbar{ width:8px; }
+  .use-list::-webkit-scrollbar-thumb{ background:rgba(148,163,184,.25); border-radius:8px; }
+
+  .right{
+    flex:1; padding:12px 18px; display:flex; justify-content:center; align-items:center;
+    position:relative; overflow:hidden;
+  }
+  .chart-wrap{
+    display:flex; align-items:flex-end; justify-content:center; gap:24px;
+    width:100%; height:100%;
+  }
+  .bar-outer{
+    position:relative;
+    width: clamp(90px, 14vw, 160px);         /* barra larga */
+    height: clamp(420px, 72vh, 860px);       /* maior parte da tela */
+    border-radius:30px;
+    background: linear-gradient(180deg, rgba(15,23,36,.85), rgba(10,15,22,.75));
+    border:1px solid rgba(148,163,184,.18);
+    box-shadow: inset 0 2px 6px rgba(255,255,255,.04),
+                inset 0 -2px 20px rgba(0,0,0,.45),
+                0 25px 60px rgba(14,165,255,.12);
+    overflow:hidden;
+  }
+  .bar-fill{
+    position:absolute; left:0; right:0; bottom:0; height:0%;
+    background: linear-gradient(180deg, rgba(96,165,250,.85), rgba(52,211,153,.92));
+    box-shadow: 0 -6px 30px rgba(96,165,250,.35) inset, 0 10px 40px rgba(52,211,153,.25) inset;
+    transition: height .0s;
+  }
+  .bar-gloss{ position:absolute; inset:8px; border-radius:26px;
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0) 30%, transparent 60%, rgba(255,255,255,.06) 100%);
+    pointer-events:none;
+  }
+  .ticks{ position:absolute; inset:12px; pointer-events:none; color:#cbd5e1; font-size: clamp(11px,1.6vw,14px); }
+  .tick-line{ position:absolute; left:6px; right:6px; height:1px; background: rgba(148,163,184,.28); }
+  .tick-label{ position:absolute; right:8px; transform: translateY(-50%); text-shadow:0 1px 0 rgba(0,0,0,.6); }
+
+  .pct-readout{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    font-weight:900; letter-spacing:.5px;
+    font-size: clamp(20px,3.6vw,34px);
+    color:#eaf4ff; text-shadow:0 0 14px rgba(14,165,255,.35);
+    background: rgba(96,165,250,.16);
+    border:1px solid rgba(96,165,250,.25);
+    padding:8px 14px; border-radius:14px;
+  }
+
+  @media (max-width: 900px){
+    main{ flex-direction:column; }
+    .left{ width:100%; min-height:44%; }
+    .right{ min-height:52%; }
+    .use-list{ max-height: 20vh; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card">
+      <div class="title">
+        <span class="dot" aria-hidden="true"></span>
+        <h1>Painel Solar – D-Pad do Joystick (USB)</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="status" id="gpStatus">Controle: não detectado</span>
+        <button class="btn" id="startBtn" title="Iniciar leitura do controle">Iniciar</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ESQUERDA: INFORMAÇÕES EM TEMPO REAL -->
+      <section class="left card">
+        <div class="legend">
+          <span class="pill"><span class="b-dot bd-blue"></span> Produção (barra)</span>
+          <span class="pill"><span class="b-dot bd-green"></span> Itens sugeridos</span>
+        </div>
+
+        <div class="grid" role="table" aria-label="Leituras em tempo real">
+          <div class="label">Gamepad:</div>      <div class="val" id="gpName">—</div>
+          <div class="label">Nível:</div>         <div class="val"><span id="pctText">0</span>%</div>
+          <div class="label">Mini placa (1 W máx):</div>
+          <div class="val"><span id="miniW">0.00</span> W • <span id="miniV">0.00</span> V</div>
+          <div class="label">Placa residencial (1000 W máx):</div>
+          <div class="val"><span id="houseW">0</span> W</div>
+          <div class="label">Direcional pressionado:</div>
+          <div class="val" id="btnsText">—</div>
+        </div>
+
+        <div class="badge" title="Regras de mapeamento">
+          <span class="b-dot bd-blue"></span>
+          <span><strong>Regras:</strong> ↑ = 35% • ↑+← = 70% • ↑+→ = 100% • outros = 0%</span>
+        </div>
+        <div class="badge" title="Compatibilidade">
+          <span class="b-dot bd-green"></span>
+          <span>Compatível com <em>getGamepads</em> / <em>webkitGetGamepads</em> (D-Pad = botões 12-15). Fallback: analógico.</span>
+        </div>
+        <div class="badge" title="Dica">
+          <span class="b-dot bd-blue"></span>
+          <span>Android: toque em “Iniciar” após conectar o controle via OTG/USB.</span>
+        </div>
+
+        <div style="height:1px;background:rgba(148,163,184,.18);margin:6px 0;"></div>
+        <div class="use-title">O que daria para ligar (estimativas)</div>
+        <ul class="use-list" id="useList"><li>—</li></ul>
+      </section>
+
+      <!-- DIREITA: GRÁFICO -->
+      <section class="right card">
+        <div class="pct-readout" id="pctBadge">0%</div>
+        <div class="chart-wrap">
+          <div class="bar-outer" aria-label="Produção de energia em %">
+            <div class="bar-fill" id="barFill"></div>
+            <div class="bar-gloss"></div>
+            <div class="ticks" aria-hidden="true"><!-- criado via JS --></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  var raf = window.requestAnimationFrame
+         || window.webkitRequestAnimationFrame
+         || function(cb){ return setTimeout(cb, 16); };
+
+  function clamp(v,min,max){ return v<min?min : v>max?max : v; }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  var barFill = document.getElementById('barFill');
+  var pctText = document.getElementById('pctText');
+  var pctBadge= document.getElementById('pctBadge');
+  var miniW   = document.getElementById('miniW');
+  var miniV   = document.getElementById('miniV');
+  var houseW  = document.getElementById('houseW');
+  var useList = document.getElementById('useList');
+  var gpStatus= document.getElementById('gpStatus');
+  var gpName  = document.getElementById('gpName');
+  var btnsText= document.getElementById('btnsText');
+  var startBtn= document.getElementById('startBtn');
+  var ticksBox= document.querySelector('.ticks');
+
+  [0,35,70,100].forEach(function(p){
+    var y = (100 - p) + '%';
+    var line = document.createElement('div');
+    line.className='tick-line';
+    line.style.top = 'calc(' + y + ' - 1px)';
+    ticksBox.appendChild(line);
+
+    var lab = document.createElement('div');
+    lab.className='tick-label';
+    lab.style.top = 'calc(' + y + ')';
+    lab.textContent = p + '%';
+    ticksBox.appendChild(lab);
+  });
+
+  var running = false;
+  var curPct = 0;
+  var targetPct = 0;
+  var lastTs = 0;
+
+  function suggestionsFor(percent){
+    var p = percent/100;
+    var w = Math.round(1000 * p);
+    var out = [];
+    if (percent < 5){
+      out.push('Nada relevante (standby).');
+    } else if (percent < 40){
+      out.push('TV LED 42" (~120 W)');
+      out.push('Roteador Wi-Fi (~10 W)');
+      out.push('3–5 lâmpadas LED (40–60 W)');
+      out.push('Carregadores de celular (~10 W)');
+    } else if (percent < 85){
+      out.push('TV + notebook (≈200 W)');
+      out.push('Geladeira pequena (150–200 W)');
+      out.push('Ventilador (50–80 W)');
+      out.push('Várias lâmpadas LED (≤100 W)');
+    } else {
+      out.push('Geladeira + TV + notebook');
+      out.push('Ventilador e iluminação da sala');
+      out.push('Pequenos eletrodomésticos não resistivos');
+    }
+    out.push('Potência disponível aproximada: ' + w + ' W');
+    return out;
+  }
+
+  function renderUseList(items){
+    useList.innerHTML = '';
+    items.forEach(function(txt){
+      var li = document.createElement('li');
+      li.textContent = txt;
+      useList.appendChild(li);
+    });
+  }
+
+  function getPads(){
+    var nav = navigator;
+    return (nav.getGamepads && nav.getGamepads())
+        || (nav.webkitGetGamepads && nav.webkitGetGamepads())
+        || [];
+  }
+
+  /* Detecta D-Pad (botões 12-15) com fallback para analógico (axes[0]/axes[1]) */
+  function readDirectional(pad){
+    var up=false, left=false, right=false;
+
+    if (pad.buttons && pad.buttons.length >= 16){
+      up    = !!pad.buttons[12]?.pressed;
+      left  = !!pad.buttons[14]?.pressed;
+      right = !!pad.buttons[15]?.pressed;
+    }
+
+    // Fallback por eixos (aceita analógico como direcional)
+    if (pad.axes && pad.axes.length >= 2){
+      var axX = pad.axes[0], axY = pad.axes[1];
+      if (!up)    up    = axY < -0.5;
+      if (!left)  left  = axX < -0.5;
+      if (!right) right = axX >  0.5;
+    }
+
+    return {up:up, left:left, right:right};
+  }
+
+  function rulePercentFromDir(dir){
+    // Regras: ↑ = 35%; ↑+← = 70%; ↑+→ = 100%; demais = 0%
+    if (dir.up && dir.left && !dir.right) return 70;
+    if (dir.up && dir.right && !dir.left) return 100;
+    if (dir.up && !dir.left && !dir.right) return 35;
+    return 0;
+  }
+
+  function step(ts){
+    if (!running){ return; }
+
+    var pads = getPads();
+    var pad = pads && pads[0];
+
+    if (pad){
+      gpStatus.textContent = 'Controle: conectado';
+      gpName.textContent = pad.id || 'Genérico';
+
+      var dir = readDirectional(pad);
+      var pressedTxt = [];
+      if (dir.up)    pressedTxt.push('↑');
+      if (dir.left)  pressedTxt.push('←');
+      if (dir.right) pressedTxt.push('→');
+      btnsText.textContent = pressedTxt.length ? pressedTxt.join(' + ') : '—';
+
+      targetPct = rulePercentFromDir(dir);
+    } else {
+      gpStatus.textContent = 'Controle: não detectado';
+      gpName.textContent = '—';
+      btnsText.textContent = '—';
+      targetPct = 0;
+    }
+
+    var dt = Math.min(50, ts - (lastTs||ts));
+    lastTs = ts;
+    var smooth = 1 - Math.pow(0.88, dt/16);
+    curPct = lerp(curPct, targetPct, smooth);
+    if (Math.abs(curPct - targetPct) < 0.1) curPct = targetPct;
+
+    var shown = Math.round(curPct);
+    barFill.style.height = clamp(curPct,0,100) + '%';
+    pctText.textContent = shown;
+    pctBadge.textContent = shown + '%';
+
+    var p = clamp(curPct,0,100)/100;
+    miniW.textContent  = (1.0 * p).toFixed(2);
+    miniV.textContent  = (5.0 * p).toFixed(2);
+    houseW.textContent = Math.round(1000 * p);
+
+    if (!step.lastShown || Math.abs(shown - step.lastShown) >= 5 || shown===0 || shown===35 || shown===70 || shown===100){
+      renderUseList(suggestionsFor(shown));
+      step.lastShown = shown;
+    }
+
+    raf(step);
+  }
+
+  function start(){
+    if (running) return;
+    running = true;
+    lastTs = 0;
+    raf(step);
+  }
+
+  window.addEventListener('gamepadconnected', function(e){
+    gpStatus.textContent = 'Controle: conectado';
+    gpName.textContent = (e && e.gamepad && e.gamepad.id) ? e.gamepad.id : 'Genérico';
+  });
+  window.addEventListener('gamepaddisconnected', function(){
+    gpStatus.textContent = 'Controle: desconectado';
+    gpName.textContent = '—';
+  });
+
+  document.getElementById('startBtn').addEventListener('click', start);
+  document.addEventListener('keydown', function(){ if(!running) start(); });
+  document.addEventListener('pointerdown', function(){ if(!running) start(); });
+})();
+</script>
+</body>
+</html>
     font-weight:600;
     margin:0;
     letter-spacing:.3px;
@@ -1507,6 +1853,7 @@
 </script>
 </body>
 </html>
+
 
 
 
